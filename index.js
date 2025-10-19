@@ -4,17 +4,29 @@ const app = express()
 const { PORT } = require('./util/config')
 const { connectToDatabase } = require('./util/db')
 
-const { router: blogsRouter, errorHandler: blogsErrorHandler } = require('./controllers/blogs')
+const blogsRouter = require('./controllers/blogs')
 const usersRouter = require('./controllers/users')
 const loginRouter = require('./controllers/login')
 
 app.use(express.json())
 
 app.use('/api/blogs', blogsRouter)
-app.use(blogsErrorHandler)
-
 app.use('/api/users', usersRouter)
 app.use('/api/login', loginRouter)
+
+const errorHandler = (error, req, res, next) => {
+  if (error.name === 'TypeError') {
+    return res.status(404).json({ error: 'blog not found' })
+  }
+
+  if (error.name === 'SequelizeValidationError') {    
+    return res.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
+app.use(errorHandler)
 
 const start = async () => {
   await connectToDatabase()

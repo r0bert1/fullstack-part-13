@@ -7,13 +7,9 @@ router.get('/', async (req, res) => {
   res.json(users)
 })
 
-router.post('/', async (req, res) => {
-  try {
-    const user = await User.create(req.body)
-    res.json(user)
-  } catch(error) {
-    return res.status(400).json({ error })
-  }
+router.post('/', async (req, res, next) => {
+  const user = await User.create(req.body)
+  res.json(user)
 })
 
 router.put('/:username', async (req, res) => {
