@@ -1,14 +1,38 @@
 const router = require('express').Router()
+const jwt = require('jsonwebtoken')
 
 const { Blog } = require('../models')
+const { User } = require('../models')
+const { SECRET } = require('../util/config')
 
 router.get('/', async (req, res) => {
-  const blogs = await Blog.findAll()
+  const blogs = await Blog.findAll({
+    attributes: { exclude: ['userId'] },
+    include: {
+      model: User,
+      attributes: ['name']
+    }
+  })
   res.json(blogs)
 })
 
-router.post('/', async (req, res, next) => {
-  const blog = await Blog.create(req.body)
+const tokenExtractor = (req, res, next) => {
+  const authorization = req.get('authorization')
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    try {
+      req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
+    } catch (e) {
+      return res.status(401).json({ error: 'token invalid' })
+    }
+  } else {
+    return res.status(401).json({ error: 'token missing' })
+  }
+  next()
+}
+
+router.post('/', tokenExtractor, async (req, res, next) => {
+  const user = await User.findByPk(req.decodedToken.id)
+  const blog = await Blog.create({ ...req.body, userId: user.id, date: new Date() })
   return res.json(blog)
 })
 
@@ -30,17 +54,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 })
-
-/* const errorHandler = (error, req, res, next) => {
-  if (error.name === 'TypeError') {
-    return res.status(404).json({ error: 'blog not found' })
-  }
-
-  if (error.name === 'SequelizeValidationError') {
-    return res.status(400).json({ error: error.message })
-  }
-
-  next(error)
-} */
 
 module.exports = router
