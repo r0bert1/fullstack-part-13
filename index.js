@@ -20,7 +20,7 @@ app.use('/api/readinglists', readingListsRouter)
 
 const errorHandler = (error, req, res, next) => {
   if (error.name === 'TypeError') {
-    return res.status(404).json({ error: 'blog not found' })
+    return res.status(404).json({ error: error.message })
   }
 
   if (error.name === 'SequelizeValidationError') {

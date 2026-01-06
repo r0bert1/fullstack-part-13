@@ -9,5 +9,7 @@ User.belongsToMany(Blog, { through: UserBlogs, as: 'reading_list' })
 Blog.belongsToMany(User, { through: UserBlogs, as: 'users_reading_list' })
 
 module.exports = {
-  Blog, User
+  Blog,
+  User,
+  UserBlogs,
 }
